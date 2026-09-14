@@ -144,6 +144,7 @@ func putGreeting(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 func parseGreetingRequest(w http.ResponseWriter, r *http.Request) (string, bool) {
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 
 	var body struct {
 		Greeting *string `json:"greeting"`
