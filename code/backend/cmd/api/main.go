@@ -60,7 +60,7 @@ func migrate(ctx context.Context, db *sql.DB) error {
 	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (filename text PRIMARY KEY)`); err != nil {
 		return fmt.Errorf("create migration table: %w", err)
 	}
-	entries, err := fs.Glob(migrationFiles, "migrations/*.up.sql")
+	entries, err := fs.Glob(migrations.Files, "*.up.sql")
 	if err != nil {
 		return fmt.Errorf("list migrations: %w", err)
 	}
