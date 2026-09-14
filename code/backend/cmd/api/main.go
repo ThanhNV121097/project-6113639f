@@ -50,6 +50,7 @@ func main() {
 		}
 		w.WriteHeader(http.StatusOK)
 	})
+	http.HandleFunc("/v1/greeting", greetingHandler(db))
 
 	port := os.Getenv("PORT")
 	if port == "" {
