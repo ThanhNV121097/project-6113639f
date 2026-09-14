@@ -3,21 +3,16 @@ package main
 import (
 	"context"
 	"database/sql"
-	"embed"
-	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"sort"
-	"strings"
 	"time"
 
+	"github.com/ThanhNV121097/project-6113639f/backend/migrations"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
-
-//go:embed migrations/*.sql
-var migrationFiles embed.FS
 
 func main() {
 	databaseURL := os.Getenv("DATABASE_URL")
