@@ -94,5 +94,3 @@ func migrate(ctx context.Context, db *sql.DB) error {
 	}
 	return nil
 }
-
-var _ = strings.TrimSpace
