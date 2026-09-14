@@ -1,3 +1,22 @@
+# ERD — Greeting
+
+## `greetings`
+
+One row represents app-wide greeting. Seed migration creates fixed row `id = 1` with `Hello, World!`.
+
+| Column | PostgreSQL type | Constraints | Purpose |
+|---|---|---|---|
+| `id` | `smallint` | primary key, check (`id = 1`) | Enforces one shared record |
+| `text` | `text` | not null, check (`btrim(text) <> ''`) | Trimmed greeting shown to visitors |
+| `updated_at` | `timestamptz` | not null, default `now()` | Most recent completed save time |
+
+Relationships: none. `greetings` is singleton table.
+
+## Migration rules
+
+- Migration filenames use UTC timestamp prefix and paired `.up.sql` / `.down.sql` files.
+- Backend records applied filenames in `schema_migrations`.
+- Initial up migration creates table and inserts singleton default. Down migration drops `greetings`.
 
 ## Story extension — Editable persisted greeting
 
@@ -5,7 +24,7 @@ This story uses existing `greetings` singleton unchanged. No new entity, column,
 
 ### Mock shape review
 
-Reviewed UI PR #6 mock: `GreetingResponse` is `{ "greeting": string }`; `readGreeting()` and `saveGreeting()` return that shape. It is sound and matches existing service contract response bodies exactly. The mock's `localStorage` persistence is UI-only and must be deleted when backend integration replaces it; no frontend response-shape change is needed.
+Reviewed UI PR #6 mock: `GreetingResponse` is `{ "greeting": string }`; `readGreeting()` and `saveGreeting()` return that shape. It is sound and matches existing service contract response bodies exactly. Mock `localStorage` persistence is UI-only and must be deleted when backend integration replaces it; no frontend response-shape change is needed.
 
 ### Migration plan
 
