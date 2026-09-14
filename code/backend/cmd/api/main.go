@@ -73,7 +73,7 @@ func migrate(ctx context.Context, db *sql.DB) error {
 		if applied {
 			continue
 		}
-		sqlBytes, err := migrationFiles.ReadFile(name)
+		sqlBytes, err := migrations.Files.ReadFile(name)
 		if err != nil {
 			return fmt.Errorf("read migration %s: %w", name, err)
 		}
