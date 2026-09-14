@@ -41,3 +41,16 @@ Response `200`:
 ```
 
 Errors: `400` for malformed JSON, missing greeting, non-string greeting, or blank trimmed greeting; `500` for unavailable persistence.
+
+## Story extension — Editable persisted greeting
+
+UI PR #6 mock returns `{ "greeting": string }` for reads and saves. Existing endpoint response shape matches it; backend integration replaces mock functions and deletes `code/frontend/lib/mock/editable-persisted-greeting.ts`. No component contract change.
+
+### Endpoint execution details
+
+| Endpoint | Auth | Success | Error codes |
+|---|---|---|---|
+| `GET /v1/greeting` | none | `200` with `{ "greeting": string }` | `500 internal_error` when persistence is unavailable or query fails |
+| `PUT /v1/greeting` | none | `200` with trimmed persisted `{ "greeting": string }` | `400 invalid_request` for malformed JSON, missing/non-string `greeting`, or blank after trim; `500 internal_error` when persistence is unavailable or update fails |
+
+`PUT` must use parameterized SQL, update singleton `id = 1`, and set `updated_at = now()`. Latest completed successful update wins. No pagination applies: service exposes one singleton resource. Missing singleton is migration invariant; if breached, return `500 internal_error`, never manufacture an unpersisted response.
