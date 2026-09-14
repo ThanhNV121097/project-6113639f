@@ -1,15 +1,35 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
-import { readGreeting, saveGreeting } from "../lib/mock/editable-persisted-greeting";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { readGreeting, saveGreeting } from "../lib/editable-persisted-greeting";
 import styles from "./EditablePersistedGreeting.module.css";
 
+const DEFAULT_GREETING = "Hello, World!";
+
 export function EditablePersistedGreeting() {
-  const [greeting, setGreeting] = useState(() => readGreeting().greeting);
-  const [draft, setDraft] = useState(greeting);
+  const [greeting, setGreeting] = useState(DEFAULT_GREETING);
+  const [draft, setDraft] = useState(DEFAULT_GREETING);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    let active = true;
+
+    readGreeting()
+      .then((response) => {
+        if (!active) {
+          return;
+        }
+        setGreeting(response.greeting);
+        setDraft(response.greeting);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const nextGreeting = draft.trim();
@@ -19,7 +39,7 @@ export function EditablePersistedGreeting() {
       return;
     }
 
-    const response = saveGreeting(nextGreeting);
+    const response = await saveGreeting(nextGreeting);
     setGreeting(response.greeting);
     setDraft(response.greeting);
   }
