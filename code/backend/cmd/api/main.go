@@ -100,3 +100,81 @@ func migrate(ctx context.Context, db *sql.DB) error {
 	}
 	return nil
 }
+
+func greetingHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			getGreeting(w, r, db)
+		case http.MethodPut:
+			putGreeting(w, r, db)
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+func getGreeting(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	var greeting string
+	if err := db.QueryRowContext(r.Context(), `SELECT text FROM greetings WHERE id = 1`).Scan(&greeting); err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "internal_error", "Internal server error.")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"greeting": greeting})
+}
+
+func putGreeting(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	greeting, ok := parseGreetingRequest(w, r)
+	if !ok {
+		return
+	}
+
+	var saved string
+	err := db.QueryRowContext(
+		r.Context(),
+		`UPDATE greetings SET text = $1, updated_at = now() WHERE id = 1 RETURNING text`,
+		greeting,
+	).Scan(&saved)
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "internal_error", "Internal server error.")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"greeting": saved})
+}
+
+func parseGreetingRequest(w http.ResponseWriter, r *http.Request) (string, bool) {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	var body struct {
+		Greeting *string `json:"greeting"`
+	}
+	if err := decoder.Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid_request", "Invalid request.")
+		return "", false
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		writeAPIError(w, http.StatusBadRequest, "invalid_request", "Invalid request.")
+		return "", false
+	}
+	if body.Greeting == nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid_request", "Invalid request.")
+		return "", false
+	}
+	greeting := strings.TrimSpace(*body.Greeting)
+	if greeting == "" {
+		writeAPIError(w, http.StatusBadRequest, "invalid_request", "Greeting must not be blank.")
+		return "", false
+	}
+	return greeting, true
+}
+
+func writeJSON(w http.ResponseWriter, status int, body any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(body)
+}
+
+func writeAPIError(w http.ResponseWriter, status int, code string, message string) {
+	writeJSON(w, status, map[string]any{"error": map[string]string{"code": code, "message": message}})
+}
